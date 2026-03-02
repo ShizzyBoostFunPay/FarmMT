@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Танковый учёт | by ShizzaBoost</title>
+    <title>Танковый учёт | by ShizzyBoost</title>
+    <!-- Favicon (золотой танк SVG) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='15' y='40' width='70' height='30' rx='5' fill='%23ffd966' /%3E%3Ccircle cx='65' cy='55' r='15' fill='%23ffd966' /%3E%3Crect x='5' y='45' width='15' height='20' rx='3' fill='%23ffd966' /%3E%3C/svg%3E">
     <style>
         /* ========== ПОЛНЫЕ СТИЛИ ========== */
         * {
@@ -34,6 +36,24 @@
             color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Canvas для фоновых частиц */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* чтобы не мешать кликам */
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         .header {
             background: linear-gradient(135deg, #2c3142, #1a1e2b);
@@ -477,6 +497,7 @@
     </style>
 </head>
 <body>
+    <canvas id="particleCanvas"></canvas>
     <div class="container">
         <!-- Шапка (обновлённая) -->
         <div class="header">
@@ -539,7 +560,7 @@
                         <option value="Т-44">Т-44 (VIII)</option>
                         <option value="Тигр II">Tiger II (VIII)</option>
                         <option value="AMX 13 90">AMX 13 90 (IX)</option>
-                        <option value="Линия Фронта">Другие...</option>
+                        <option value="Линия Фронта">Линия Фронта</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -711,11 +732,84 @@
         </div>
     </div>
 
+    <!-- Модальное окно для ввода пароля администратора -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Вход для администратора</h3>
+                <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">Пароль</label>
+                    <input type="password" class="form-control" id="adminPassword" placeholder="Введите пароль" onkeypress="if(event.key==='Enter') checkPassword()">
+                </div>
+                <div id="passwordError" style="color: var(--danger); margin-top: 10px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePasswordModal()">Отмена</button>
+                <button class="btn btn-primary" onclick="checkPassword()">Войти</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Контейнер уведомлений -->
     <div id="toastContainer"></div>
 
     <script src="https://kit.fontawesome.com/yourcode.js" crossorigin="anonymous"></script>
     <script>
+        // ==================== АНИМИРОВАННЫЙ ФОН ЧАСТИЦ ====================
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        const PARTICLE_COUNT = 100; // количество частиц
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 3 + 1,
+                    color: `rgba(255, 217, 102, ${Math.random() * 0.5 + 0.2})` // золотой
+                });
+            }
+        }
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // отскок от границ
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                // рисуем
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animateParticles();
+
         // ==================== НАСТРОЙКИ РЕПОЗИТОРИЯ ====================
         const GITHUB_USERNAME = 'ShizzyBoostFunPay';      // ваш логин
         const GITHUB_REPO = 'FarmMT';                     // название репозитория
@@ -735,11 +829,65 @@
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         const adminLogoutBtn = document.getElementById('adminLogoutBtn');
         const tokenInput = document.getElementById('githubToken');
+        const passwordModal = document.getElementById('passwordModal');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const passwordError = document.getElementById('passwordError');
+
+        // ==================== МОДАЛЬНОЕ ОКНО ПАРОЛЯ ====================
+        window.openPasswordModal = function() {
+            passwordModal.classList.add('show');
+            adminPasswordInput.value = '';
+            passwordError.textContent = '';
+            adminPasswordInput.focus();
+        };
+
+        window.closePasswordModal = function() {
+            passwordModal.classList.remove('show');
+        };
+
+        window.checkPassword = function() {
+            const pwd = adminPasswordInput.value.trim();
+            if (pwd === "Krasav41k") { // при необходимости смените пароль
+                isAdmin = true;
+                adminLoginBtn.classList.add('hidden');
+                adminLogoutBtn.classList.remove('hidden');
+                adminPanel.classList.remove('hidden');
+                adminOnlyElements.forEach(el => el.classList.remove('hidden'));
+                showToast("Добро пожаловать, администратор!", "success");
+                updateAllStats();
+                closePasswordModal();
+            } else {
+                passwordError.textContent = "Неверный пароль";
+                adminPasswordInput.focus();
+            }
+        };
+
+        // Закрытие модалки при клике на фон
+        passwordModal.addEventListener('click', function(e) {
+            if (e.target === passwordModal) {
+                closePasswordModal();
+            }
+        });
+
+        // ==================== ВЫХОД ====================
+        adminLogoutBtn.onclick = function() {
+            isAdmin = false;
+            githubToken = '';
+            tokenInput.value = '';
+            adminLoginBtn.classList.remove('hidden');
+            adminLogoutBtn.classList.add('hidden');
+            adminPanel.classList.add('hidden');
+            adminOnlyElements.forEach(el => el.classList.add('hidden'));
+            showToast("Вы вышли из режима администратора", "info");
+            updateAllStats();
+        };
+
+        // Привязываем открытие модалки к кнопке входа
+        adminLoginBtn.onclick = openPasswordModal;
 
         // ==================== ЗАГРУЗКА ДАННЫХ ИЗ GITHUB ====================
         async function loadDataFromGitHub() {
             try {
-                // Добавляем параметр _=${Date.now()} для предотвращения кеширования
                 const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?ref=${GITHUB_BRANCH}&_=${Date.now()}`;
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -752,7 +900,6 @@
                 } else {
                     const data = await response.json();
                     currentFileSha = data.sha;
-                    // Правильное преобразование base64 в UTF-8
                     const binary = atob(data.content);
                     const bytes = new Uint8Array(binary.length);
                     for (let i = 0; i < binary.length; i++) {
@@ -786,7 +933,6 @@
             }
 
             try {
-                // 1. Получаем актуальный SHA файла
                 const fileUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?ref=${GITHUB_BRANCH}`;
                 let sha = null;
                 const fileResponse = await fetch(fileUrl, {
@@ -801,10 +947,7 @@
                     throw new Error(err.message || 'Ошибка получения информации о файле');
                 }
 
-                // 2. Подготавливаем контент в base64 (правильно для UTF-8)
                 const content = btoa(unescape(encodeURIComponent(JSON.stringify(battles, null, 2))));
-
-                // 3. Отправляем запрос на сохранение
                 const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
                 const body = {
                     message: 'Обновление данных через API',
@@ -839,34 +982,6 @@
                 return false;
             }
         }
-
-        // ==================== АУТЕНТИФИКАЦИЯ ====================
-        adminLoginBtn.onclick = function() {
-            const pwd = prompt("Введите пароль администратора:");
-            if (pwd === "Krasav41k!") { // при необходимости смените пароль
-                isAdmin = true;
-                adminLoginBtn.classList.add('hidden');
-                adminLogoutBtn.classList.remove('hidden');
-                adminPanel.classList.remove('hidden');
-                adminOnlyElements.forEach(el => el.classList.remove('hidden'));
-                showToast("Добро пожаловать, администратор!", "success");
-                updateAllStats();
-            } else {
-                showToast("Ошибка", "Неверный пароль", "error");
-            }
-        };
-
-        adminLogoutBtn.onclick = function() {
-            isAdmin = false;
-            githubToken = '';
-            tokenInput.value = '';
-            adminLoginBtn.classList.remove('hidden');
-            adminLogoutBtn.classList.add('hidden');
-            adminPanel.classList.add('hidden');
-            adminOnlyElements.forEach(el => el.classList.add('hidden'));
-            showToast("Вы вышли из режима администратора", "info");
-            updateAllStats();
-        };
 
         function getToken() {
             const token = tokenInput.value.trim();
