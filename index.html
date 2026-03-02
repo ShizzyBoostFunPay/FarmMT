@@ -58,23 +58,35 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Обновлённая структура шапки */
         .header-content {
-            position: relative;
-            z-index: 1;
             display: flex;
             align-items: center;
             gap: 30px;
             flex-wrap: wrap;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
         }
         .tank-icon {
             font-size: 4rem;
             filter: drop-shadow(0 0 20px rgba(255,217,102,0.3));
         }
-        .header-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
+        .header-title {
             flex: 1;
+        }
+        .header-stats-row {
+            display: flex;
+            gap: 30px;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .header-admin-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
         .stat-block {
             background: rgba(0,0,0,0.3);
@@ -83,6 +95,8 @@
             text-align: center;
             backdrop-filter: blur(5px);
             border: 1px solid var(--border);
+            flex: 1 1 0; /* чтобы блоки занимали равную ширину */
+            min-width: 150px;
         }
         .stat-label {
             color: var(--text-secondary);
@@ -105,11 +119,10 @@
             border-radius: 30px;
             cursor: pointer;
             font-size: 1rem;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
             transition: all 0.3s;
-            margin-left: auto;
         }
         .admin-btn:hover {
             background: var(--border);
@@ -118,6 +131,7 @@
         .admin-btn i {
             color: var(--gold);
         }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -443,8 +457,12 @@
                 flex-direction: column;
                 text-align: center;
             }
-            .header-stats {
-                grid-template-columns: 1fr;
+            .header-stats-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .header-admin-row {
+                justify-content: center;
             }
             .input-grid {
                 grid-template-columns: 1fr;
@@ -460,28 +478,30 @@
 </head>
 <body>
     <div class="container">
-        <!-- Шапка -->
+        <!-- Шапка (обновлённая) -->
         <div class="header">
             <div class="header-content">
                 <div class="tank-icon">🎮</div>
-                <div style="flex: 1;">
+                <div class="header-title">
                     <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Танковый учёт</h1>
                     <p style="color: var(--text-secondary);">Данные из репозитория GitHub</p>
                 </div>
-                <div class="header-stats">
-                    <div class="stat-block">
-                        <div class="stat-label">Всего боёв</div>
-                        <div class="stat-value" id="totalBattles">0</div>
-                    </div>
-                    <div class="stat-block">
-                        <div class="stat-label">Заработано</div>
-                        <div class="stat-value silver" id="totalSilver">0</div>
-                    </div>
-                    <div class="stat-block">
-                        <div class="stat-label">Средний бой</div>
-                        <div class="stat-value" id="averagePerBattle">0</div>
-                    </div>
+            </div>
+            <div class="header-stats-row">
+                <div class="stat-block">
+                    <div class="stat-label">Всего боёв</div>
+                    <div class="stat-value" id="totalBattles">0</div>
                 </div>
+                <div class="stat-block">
+                    <div class="stat-label">Заработано</div>
+                    <div class="stat-value silver" id="totalSilver">0</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-label">Средний бой</div>
+                    <div class="stat-value" id="averagePerBattle">0</div>
+                </div>
+            </div>
+            <div class="header-admin-row">
                 <button class="admin-btn" id="adminLoginBtn">
                     <i class="fas fa-lock"></i> Вход для администратора
                 </button>
